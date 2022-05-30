@@ -1,0 +1,36 @@
+import turtle
+import math
+
+#dessin d'un pixel
+def dessinerPixel(x , y):
+    fillcolor("black")
+    up()
+    goto(x,y)
+    down()
+    begin_fill()
+    for i in range(4):
+        forward(20)
+        left(90)
+    end_fill()
+
+
+
+#dessine l'image a partir du fichier txt mis en parametre
+def dessinerASCII(nomFichier):
+    #Variables
+    x =-300
+    y = 100
+
+    #parametres
+    speed(10)
+
+    fichier = open(nomFichier, "r")
+    lignes = fichier.readlines()
+    for ligne in lignes:
+        for bit in ligne:
+            if(bit == "1"):
+                dessinerPixel(x , y)
+            x+=20
+        y-=20
+        x=-300
+    print("dessin terminé")
