@@ -38,9 +38,10 @@ def dessinerASCII(nomFichier):
     x =-300
     y = 100
 
-    #parametres
+    #parametres du stylo
     speed(15)
     delay(0)
+    hideturtle()
 
     fichier = open(nomFichier, "r")
     lignes = fichier.readlines()
