@@ -40,6 +40,7 @@ def dessinerASCII(nomFichier):
 
     #parametres
     speed(15)
+    delay(0)
 
     fichier = open(nomFichier, "r")
     lignes = fichier.readlines()
