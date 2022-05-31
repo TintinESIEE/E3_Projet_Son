@@ -1,0 +1,17 @@
+def convDemod(demodulation, Lpix):
+    """
+    ENTREE : Prend en parametre le résultat de la démodulation du signal, et la longueur des lignes du code de base (Lpix).
+    SORTIE : Enregistre un fichier "resultat.txt" dans le dossier courant contenant le message restructuré.
+    
+    """
+       
+    f = open('resultat.txt', 'w')
+    c = 0
+    for i in range(demodulation.size):
+        c += 1
+        f.write(str(demodulation[i])[0])
+        if(c==Lpix):
+            f.write("\n")
+            c = 0
+
+    f.close()
