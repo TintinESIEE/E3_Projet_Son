@@ -17,6 +17,8 @@ import librosa.display
 from IPython.display import Audio
 from commpy.filters import rcosfilter
 from ModulationPy import PSKModem, QAMModem
+from pydub import AudioSegment
+
 
 
 ##  Traitement du signal
@@ -84,5 +86,18 @@ sonf = librosa.stft(son)
 sonff=librosa.amplitude_to_db(abs(sonf))
 D = librosa.stft(son)
 log_power = librosa.amplitude_to_db(D**2, ref = np.max)
+song = AudioSegment.from_wav("son.wav")
+# reduce volume by 10 dB
+#song = song - 10
 
-print("Ok")
+# but let's make him very quiet
+song = song - 35
+
+# save the output
+song.export("quieter1.wav", "wav")
+sound1 = AudioSegment.from_file("son_filtre.wav") # son filtré 
+sound2 = AudioSegment.from_file("quieter1.wav") 
+#mix sound2 with sound1, starting at 47,5% into sound1)
+tmpsound = sound1.overlay(sound2, position=0.475 * len(sound1))
+tmpsound.export('tmpsound.wav',format='wav')
+
