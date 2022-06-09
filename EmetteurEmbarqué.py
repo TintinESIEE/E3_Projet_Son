@@ -18,6 +18,8 @@ from IPython.display import Audio
 from commpy.filters import rcosfilter
 from ModulationPy import PSKModem, QAMModem
 from pydub import AudioSegment
+from pydub.playback import play 
+
 
 
 
@@ -101,5 +103,6 @@ sound2 = AudioSegment.from_file("quieter1.wav")
 tmpsound = sound1.overlay(sound2, position=0.475 * len(sound1))
 tmpsound.export('tmpsound.wav',format='wav')
 
-
-print("message envoyé")
+song = AudioSegment.from_wav("tmpsound.wav")
+play(song)
+print('envoyé')
