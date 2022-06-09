@@ -101,3 +101,5 @@ sound2 = AudioSegment.from_file("quieter1.wav")
 tmpsound = sound1.overlay(sound2, position=0.475 * len(sound1))
 tmpsound.export('tmpsound.wav',format='wav')
 
+
+print("message envoyé")
