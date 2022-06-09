@@ -1,0 +1,128 @@
+"""
+tout ce qu'il vous faut pour passer de la demodulation au résultat final !
+"""
+
+from turtle import *
+import math
+
+def dessinerPixel(x , y):
+    """
+    fonction qui dessine un pixel aux coordonnées (x,y) en paramètre.
+    """
+
+
+    fillcolor("black")
+    up()
+    goto(x,y)
+    down()
+    begin_fill()
+    for i in range(4):
+        forward(10)
+        left(90)
+    end_fill()
+    
+def dessinerASCII(nomFichier, nbL):
+    """
+    fonction qui prend le nom du fichier texte décrivant l'image et le nombre de ligne concerné.
+    il dessine ensuite l'image à l'aide de la fonction "dessinerPixel".
+    """
+
+
+    #Variables
+    x =-300
+    y = 100
+    c = 0
+
+    #parametres
+    speed(15)
+    delay(0)
+    hideturtle()
+
+    fichier = open(nomFichier, "r")
+    lignes = fichier.readlines()
+    
+    
+    for ligne in lignes:
+        c += 1
+        for bit in ligne:
+            if(bit == "1" and c < nbL + 1):
+                dessinerPixel(x , y)
+            x+=10
+        y-=10
+        x=-300
+        
+    print("dessin terminé")
+   
+def convDemod(demodulation):
+    """
+    ENTREE : Prend en parametre le résultat de la démodulation du signal.
+    AFFICHAGE : Affiche l'image et la phrase transmise en appelant les fonctions précédentes.
+    SORTIE : Enregistre un fichier "resultat.txt" dans le dossier courant contenant l'image, et la phrase en binaire.
+    
+    """
+    #variables :
+    h = 0
+    l = 0
+    
+    f = open('resultat.txt', 'w')    
+    c=0
+    for i in range(16):
+        f.write(str(demodulation[i])[0])
+        c += 1
+        if(c==8):
+            f.write("\n")
+            c = 0
+            
+    for i in range(demodulation.size - 16):
+        f.write(str(demodulation[i+16])[0])
+    f.close()
+    
+    
+    
+    f = open('resultat.txt', 'r') 
+    lignes = f.readlines()
+    
+    c = 0
+    for ligne in lignes:
+        c += 1
+        if(c == 1):
+            l = ligne
+        if(c == 2):
+            h = ligne
+    
+    f.close()
+    
+    f = open('resultat.txt', 'w') 
+    
+    l = int(l, base = 2)
+    h = int(h, base = 2)
+    
+    c = 0
+    p = 0
+    for i in range(demodulation.size - 16):
+        c += 1
+        f.write(str(demodulation[i+16])[0])
+        if(c==l and p<5):
+            f.write("\n")
+            p += 1
+            c = 0
+            
+    f.close()
+     
+    dessinerASCII('resultat.txt', h)
+    
+    fichier = open('resultat.txt', "r")
+    lignes = fichier.readlines()
+    texte = char(lignes[h])
+    print("Phrase interprétée : " + texte)
+        
+    
+    
+    """""
+    #debug
+    print(l)
+    print(h)
+    print(type(l), type(h))
+    """
+    
+    f.close()
