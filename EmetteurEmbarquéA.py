@@ -287,8 +287,13 @@ image = np.array([1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,
 
 msg = np.concatenate((image,texte_binaire)) #msg = image + texte que l'on souhaite transmettre 
 
+modulation = modem.modulate(msg) # modulation -> Moduler un tableau de bits en symboles de constellation
+symbols_real = modulation.real
+symbols_imag = modulation.imag
+
+
 #Etape 2 : convolution
-Tsymbol = 0.0001875
+Tsymbol = 0.0001875*100
 Fsamp = 44100
 alpha = 1/2
 N = int(5*Tsymbol*Fsamp)
@@ -308,7 +313,7 @@ song = AudioSegment.from_wav("son.wav")
 #song = song - 10
 
 # but let's make him *very* quiet
-song = song - 30
+song = song - 25
 
 # save the output
 song.export("quieters1.wav", "wav")
@@ -320,9 +325,4 @@ tmpsound.export('tmpsounds1.wav',format='wav')
 channels, nChannels, sampleRate, ampWidth, nFrames = extract_audio('tmpsounds1.wav', tStart, tEnd)
 samples2 = convert_to_mono(channels, nChannels, np.int16)
 
-channels, nChannels, sampleRate, ampWidth, nFrames = extract_audio('son_info.wav', tStart, tEnd)
-samples = convert_to_mono(channels, nChannels, np.int16)
-
-lh_samples_filtered = fir_high_pass(samples, sampleRate, 13000, 461, np.int16)             # First pass
-lh_samples_filtered = fir_high_pass(lh_samples_filtered, sampleRate, 13000, 461, np.int16) # Second pass
-
+print("ok")
