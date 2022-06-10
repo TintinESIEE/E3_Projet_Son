@@ -14,7 +14,8 @@ import numpy as np
 import scipy
 import librosa
 import librosa.display
-from pydub import AudioSegment 
+from pydub import AudioSegment
+from pydub.playback import play
 from ModulationPy import PSKModem, QAMModem
 
 import wave
