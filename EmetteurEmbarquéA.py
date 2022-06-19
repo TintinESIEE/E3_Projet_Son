@@ -14,8 +14,7 @@ import numpy as np
 import scipy
 import librosa
 import librosa.display
-from pydub import AudioSegment
-from pydub.playback import play
+from pydub import AudioSegment 
 from ModulationPy import PSKModem, QAMModem
 
 import wave
@@ -90,31 +89,24 @@ def convert_to_mono(channels, nChannels, outputType):
 
     return samples.astype(outputType)
 
-def plot_specgram(samples, sampleRate, tStart=None, tEnd=None):
-    plt.figure(figsize=(20,10))
-    plt.specgram(samples, Fs=sampleRate, NFFT=1024, noverlap=192, cmap='nipy_spectral', xextent=(tStart,tEnd))
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
-    plt.show()
+# def plot_audio_samples(title, samples, sampleRate, tStart=None, tEnd=None):
+#     if not tStart:
+#         tStart = 0
 
-def plot_audio_samples(title, samples, sampleRate, tStart=None, tEnd=None):
-    if not tStart:
-        tStart = 0
+#     if not tEnd or tStart>tEnd:
+#         tEnd = len(samples)/sampleRate
 
-    if not tEnd or tStart>tEnd:
-        tEnd = len(samples)/sampleRate
+#     f, axarr = plt.subplots(2, sharex=True, figsize=(20,10))
+#     axarr[0].set_title(title)
+#     axarr[0].plot(np.linspace(tStart, tEnd, len(samples)), samples)
+#     axarr[1].specgram(samples, Fs=sampleRate, NFFT=1024, noverlap=192, cmap='nipy_spectral', xextent=(tStart,tEnd))
+#     #get_specgram(axarr[1], samples, sampleRate, tStart, tEnd)
 
-    f, axarr = plt.subplots(2, sharex=True, figsize=(20,10))
-    axarr[0].set_title(title)
-    axarr[0].plot(np.linspace(tStart, tEnd, len(samples)), samples)
-    axarr[1].specgram(samples, Fs=sampleRate, NFFT=1024, noverlap=192, cmap='nipy_spectral', xextent=(tStart,tEnd))
-    #get_specgram(axarr[1], samples, sampleRate, tStart, tEnd)
+#     axarr[0].set_ylabel('Amplitude')
+#     axarr[1].set_ylabel('Frequency [Hz]')
+#     plt.xlabel('Time [sec]')
 
-    axarr[0].set_ylabel('Amplitude')
-    axarr[1].set_ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
-
-    plt.show()
+#     plt.show()
 
 tStart=0
 tEnd=20
@@ -156,60 +148,62 @@ def fir_low_pass(samples, fs, fL, N, outputType):
     s = np.convolve(samples, h).astype(outputType)
     return s
 
-def fir_band_reject(samples, fs, fL, fH, NL, NH, outputType):
-    # Referece: https://fiiir.com
+# def fir_band_reject(samples, fs, fL, fH, NL, NH, outputType):
+#     # Referece: https://fiiir.com
 
-    fH = fH / fs
-    fL = fL / fs
+#     fH = fH / fs
+#     fL = fL / fs
 
-    # Compute a low-pass filter with cutoff frequency fL.
-    hlpf = np.sinc(2 * fL * (np.arange(NL) - (NL - 1) / 2.))
-    hlpf *= np.blackman(NL)
-    hlpf /= np.sum(hlpf)
-    # Compute a high-pass filter with cutoff frequency fH.
-    hhpf = np.sinc(2 * fH * (np.arange(NH) - (NH - 1) / 2.))
-    hhpf *= np.blackman(NH)
-    hhpf /= np.sum(hhpf)
-    hhpf = -hhpf
-    hhpf[int((NH - 1) / 2)] += 1
-    # Add both filters.
-    if NH >= NL:
-        h = hhpf
-        h[int((NH - NL) / 2) : int((NH - NL) / 2 + NL)] += hlpf
-    else:
-        h = hlpf
-        h[int((NL - NH) / 2) : int((NL - NH) / 2 + NH)] += hhpf
-    # Applying the filter to a signal s can be as simple as writing
-    s = np.convolve(samples, h).astype(outputType)
+#     # Compute a low-pass filter with cutoff frequency fL.
+#     hlpf = np.sinc(2 * fL * (np.arange(NL) - (NL - 1) / 2.))
+#     hlpf *= np.blackman(NL)
+#     hlpf /= np.sum(hlpf)
+#     # Compute a high-pass filter with cutoff frequency fH.
+#     hhpf = np.sinc(2 * fH * (np.arange(NH) - (NH - 1) / 2.))
+#     hhpf *= np.blackman(NH)
+#     hhpf /= np.sum(hhpf)
+#     hhpf = -hhpf
+#     hhpf[int((NH - 1) / 2)] += 1
+#     # Add both filters.
+#     if NH >= NL:
+#         h = hhpf
+#         h[int((NH - NL) / 2) : int((NH - NL) / 2 + NL)] += hlpf
+#     else:
+#         h = hlpf
+#         h[int((NL - NH) / 2) : int((NL - NH) / 2 + NH)] += hhpf
+#     # Applying the filter to a signal s can be as simple as writing
+#     s = np.convolve(samples, h).astype(outputType)
 
-    return s
+#     return s
 
-def fir_band_pass(samples, fs, fL, fH, NL, NH, outputType):
-    # Referece: https://fiiir.com
+# def fir_band_pass(samples, fs, fL, fH, NL, NH, outputType):
+#     # Referece: https://fiiir.com
 
-    fH = fH / fs
-    fL = fL / fs
+#     fH = fH / fs
+#     fL = fL / fs
 
-    # Compute a low-pass filter with cutoff frequency fH.
-    hlpf = np.sinc(2 * fH * (np.arange(NH) - (NH - 1) / 2.))
-    hlpf *= np.blackman(NH)
-    hlpf /= np.sum(hlpf)
-    # Compute a high-pass filter with cutoff frequency fL.
-    hhpf = np.sinc(2 * fL * (np.arange(NL) - (NL - 1) / 2.))
-    hhpf *= np.blackman(NL)
-    hhpf /= np.sum(hhpf)
-    hhpf = -hhpf
-    hhpf[int((NL - 1) / 2)] += 1
-    # Convolve both filters.
-    h = np.convolve(hlpf, hhpf)
-    # Applying the filter to a signal s can be as simple as writing
-    s = np.convolve(samples, h).astype(outputType)
+#     # Compute a low-pass filter with cutoff frequency fH.
+#     hlpf = np.sinc(2 * fH * (np.arange(NH) - (NH - 1) / 2.))
+#     hlpf *= np.blackman(NH)
+#     hlpf /= np.sum(hlpf)
+#     # Compute a high-pass filter with cutoff frequency fL.
+#     hhpf = np.sinc(2 * fL * (np.arange(NL) - (NL - 1) / 2.))
+#     hhpf *= np.blackman(NL)
+#     hhpf /= np.sum(hhpf)
+#     hhpf = -hhpf
+#     hhpf[int((NL - 1) / 2)] += 1
+#     # Convolve both filters.
+#     h = np.convolve(hlpf, hhpf)
+#     # Applying the filter to a signal s can be as simple as writing
+#     s = np.convolve(samples, h).astype(outputType)
 
-    return s
+#     return s
 
 
 lp_samples_filtered = fir_low_pass(samples, sampleRate, 12000, 461, np.int16)             # First pass
 lp_samples_filtered = fir_low_pass(lp_samples_filtered, sampleRate, 12000, 461, np.int16) # Second pass
+
+# Son filtré lp_samples_filtered
 
 """
 Description :
@@ -292,16 +286,16 @@ modulation = modem.modulate(msg) # modulation -> Moduler un tableau de bits en s
 symbols_real = modulation.real
 symbols_imag = modulation.imag
 
-
 #Etape 2 : convolution
 Tsymbol = 0.0001875*100
 Fsamp = 44100
 alpha = 1/2
 N = int(5*Tsymbol*Fsamp)
+temps, h_rc = rrcosfilter(N, alpha, Tsymbol, Fsamp)
+# temps : array containing the time indices, in seconds, for the impulse response
+# h_rc : impulse response of the raised cosine filter
 delta_symbols = np.zeros(len(modulation)*int(Tsymbol*Fsamp),dtype =complex)
 delta_symbols[::int(Tsymbol*Fsamp)]= modulation
-
-temps, h_rc = rcosfilter(N, alpha, Tsymbol, Fsamp)
 
 convo = np.convolve(delta_symbols , h_rc, mode="same")
 
@@ -309,23 +303,30 @@ Fcoupure = 16000 #Fréquence de coupure = milieu de la bande passante
 t=np.linspace(0 , np.size(convo)/Fsamp , np.size(convo))
 son = np.real(convo*np.exp(2*np.pi*1j*Fcoupure*t))
 
-song = AudioSegment.from_wav("son.wav")
+# song = AudioSegment.from_wav("son.wav")
 # reduce volume by 10 dB
 #song = song - 10
 
 # but let's make him *very* quiet
-song = song - 25
+# song = song - 25
 
 # save the output
-song.export("quieters1.wav", "wav")
+# song.export("quieters1.wav", "wav")
 
-sound1 = AudioSegment.from_file("son_filtré.wav") # son filtré 
-sound2 = AudioSegment.from_file("quieters1.wav") 
-#tmpsound = sound1.overlay(sound2, position=0.15 * len(sound1))
-tmpsound = sound1.overlay(sound2)
+
+x = np.zeros(len(lp_samples_filtered)-len(son))
+son = np.append(son,x)
+tmpsound = lp_samples_filtered + son # tmpsound = son porteur + info
 tmpsound.export('tmpsounds1.wav',format='wav')
-channels, nChannels, sampleRate, ampWidth, nFrames = extract_audio('tmpsounds1.wav', tStart, tEnd)
-samples2 = convert_to_mono(channels, nChannels, np.int16)
+
+# sound1 = AudioSegment.from_file("son_filtré.wav") # son filtré 
+# sound2 = AudioSegment.from_file("quieters1.wav") 
+# #tmpsound = sound1.overlay(sound2, position=0.15 * len(sound1))
+# tmpsound = sound1.overlay(sound2)
+# tmpsound.export('tmpsounds1.wav',format='wav')
+# channels, nChannels, sampleRate, ampWidth, nFrames = extract_audio('tmpsounds1.wav', tStart, tEnd)
+# samples2 = convert_to_mono(channels, nChannels, np.int16)
 song = AudioSegment.from_wav("tmpsounds1.wav")
+print("Start")
 play(song)
-print("ok")
+print("End")
