@@ -71,7 +71,6 @@ def dessinerASCII(nomFichier, nbL):
 def convDemod(demodulation):
     """
     ENTREE : Prend en parametre le résultat de la démodulation du signal.
-    AFFICHAGE : Affiche l'image et la phrase transmise en appelant les fonctions précédentes.
     SORTIE : Enregistre un fichier "resultat.txt" dans le dossier courant contenant l'image, et la phrase en binaire.
     
     """
@@ -82,14 +81,14 @@ def convDemod(demodulation):
     f = open('resultat.txt', 'w')    
     c=0
     for i in range(16):
-        f.write(str(demodulation[i])[0])
+        f.write(str(demodulation[i+752])[0])
         c += 1
         if(c==8):
             f.write("\n")
             c = 0
             
-    for i in range(demodulation.size - 16):
-        f.write(str(demodulation[i+16])[0])
+    for i in range(demodulation.size - (16+752)):
+        f.write(str(demodulation[i+16+752])[0])
     f.close()
     
     
@@ -114,17 +113,17 @@ def convDemod(demodulation):
     
     c = 0
     p = 0
-    for i in range(demodulation.size - 16):
+    for i in range(demodulation.size - 16-752):
         c += 1
-        f.write(str(demodulation[i+16])[0])
-        if(c==l and p<5):
+        f.write(str(demodulation[i+16+752])[0])
+        if(c==32 and p<5):
             f.write("\n")
             p += 1
             c = 0
             
     f.close()
      
-    dessinerASCII('resultat.txt', h)
+    dessinerASCII('resultat.txt', 5)
     
     fichier = open('resultat.txt', "r")
     lignes = fichier.readlines()
@@ -133,11 +132,11 @@ def convDemod(demodulation):
         
     
     
-    """""
+    
     #debug
     print(l)
     print(h)
     print(type(l), type(h))
-    """
+
     
     f.close()
