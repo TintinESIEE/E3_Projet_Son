@@ -1,3 +1,17 @@
+###########################################################################################################################################
+###########################################################################################################################################
+##              ISYS 10 Communication via un canal audio : Comment dissimuler des données dans du son ?
+##
+## Auteurs : A.TANGAVELOU, A.AIMEUR, F.DANAN, A.RAOULT, Q.GUYOT
+## Date : 20/06/2022
+## Participants : A.AIMEUR, F.DANAN, A.RAOULT, Q.GUYOT, A.TANGAVELOU, C.SALZEDO
+## Encadrant : V.BELMEGA 
+##
+## Code de de la carte Rasberry pi récepteur 
+## realise le décodage du son envoyé par l'émetteur afin d'afficher les informations dissimuléses.
+###########################################################################################################################################
+###########################################################################################################################################
+
 # enable plots in the notebook
 import matplotlib.pyplot as plt
 # makes our plots prettier
@@ -19,166 +33,194 @@ from pydub import AudioSegment
 from ModulationPy import PSKModem, QAMModem
 import wave
 import contextlib
-from commpy.filters import rcosfilter, rrcosfilter
+from commpy.filters import rrcosfilter
+from turtle import *
+import math
 
+# Différents types de filtres
+def fir_high_pass(samples, fs, fH, N, outputType):
+    # Referece: https://fiiir.com
 
-def interpret_wav(raw_bytes, n_frames, n_channels, sample_width, interleaved = True):
+    fH = fH / fs
 
-    if sample_width == 1:
-        dtype = np.uint8 # unsigned char
-    elif sample_width == 2:
-        dtype = np.int16 # signed 2-byte short
-    else:
-        raise ValueError("Only supports 8 and 16 bit audio formats.")
+    # Compute sinc filter.
+    h = np.sinc(2 * fH * (np.arange(N) - (N - 1) / 2.)) 
+    # Apply window.
+    h *= np.hamming(N)
+    # Normalize to get unity gain.
+    h /= np.sum(h)
+    # Create a high-pass filter from the low-pass filter through spectral inversion.
+    h = -h
+    h[int((N - 1) / 2)] += 1
+    # Applying the filter to a signal s can be as simple as writing
+    s = np.convolve(samples, h).astype(outputType)
+    return s
 
-    channels = np.frombuffer(raw_bytes, dtype=dtype)
+def binaire(s):
+    ords = (ord(c) for c in s)
+    shifts = (7, 6, 5, 4, 3, 2, 1, 0)
+    return [(o >> shift) & 1 for o in ords for shift in shifts]
 
-    if interleaved:
-        # channels are interleaved, i.e. sample N of channel M follows sample N of channel M-1 in raw data
-        channels.shape = (n_frames, n_channels)
-        channels = channels.T
-    else:
-        # channels are not interleaved. All samples from channel M occur before all samples from channel M-1
-        channels.shape = (n_channels, n_frames)
+def char(bits):
+    chars = []
+    for b in range(int(len(bits) / 8)):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
 
-    return channels
+def dessinerPixel(x , y):
+    fillcolor("black")
+    up()
+    goto(x,y)
+    down()
+    begin_fill()
+    for i in range(4):
+        forward(10)
+        left(90)
+    end_fill()
+    
+def dessinerASCII(nomFichier, nbL):
+    #Variables
+    x =-300
+    y = 100
+    c = 0
 
-def get_start_end_frames(nFrames, sampleRate, tStart=None, tEnd=None):
+    #parametres
+    speed(15)
+    delay(0)
+    hideturtle()
 
-    if tStart and tStart*sampleRate<nFrames:
-        start = tStart*sampleRate
-    else:
-        start = 0
+    fichier = open(nomFichier, "r")
+    lignes = fichier.readlines()
+    
+    
+    for ligne in lignes:
+        c += 1
+        for bit in ligne:
+            if(bit == "1" and c < nbL + 1):
+                dessinerPixel(x , y)
+            x+=10
+        y-=10
+        x=-300
+        
+    print("dessin terminé")
 
-    if tEnd and tEnd*sampleRate<nFrames and tEnd*sampleRate>start:
-        end = tEnd*sampleRate
-    else:
-        end = nFrames
+def convDemod(demodulation):
+    """
+    ENTREE : Prend en parametre le résultat de la démodulation du signal.
+    SORTIE : Enregistre un fichier "resultat.txt" dans le dossier courant contenant l'image, et la phrase en binaire.
+    
+    """
+    #variables :
+    h = 0
+    l = 0
+    
+    f = open('resultat.txt', 'w')    
+    c=0
+    for i in range(16):
+        f.write(str(demodulation[i+752])[0])
+        c += 1
+        if(c==8):
+            f.write("\n")
+            c = 0
+            
+    for i in range(demodulation.size - (16+752)):
+        f.write(str(demodulation[i+16+752])[0])
+    f.close()
+    
+    f = open('resultat.txt', 'r') 
+    lignes = f.readlines()
+    
+    c = 0
+    for ligne in lignes:
+        c += 1
+        if(c == 1):
+            l = ligne
+        if(c == 2):
+            h = ligne
+    
+    f.close()
+    
+    f = open('resultat.txt', 'w') 
+    
+    l = int(l, base = 2)
+    h = int(h, base = 2)
+    
+    c = 0
+    p = 0
+    for i in range(demodulation.size - 16-752):
+        c += 1
+        f.write(str(demodulation[i+16+752])[0])
+        if(c==32 and p<5):
+            f.write("\n")
+            p += 1
+            c = 0
+            
+    f.close()
+     
+    dessinerASCII('resultat.txt', 5)
+    
+    fichier = open('resultat.txt', "r")
+    lignes = fichier.readlines()
+    texte = char(lignes[h])
+    print("Phrase interprétée : " + texte)    
+    f.close()
+    
+# Récupération du son + info
+sampleRate, son_recepteur = wavfile.read("son_emmetteur.wav")
 
-    return (start,end,end-start)
+lh_samples_filtered = fir_high_pass(son_recepteur, sampleRate, 11500, 461, np.int16)             # First pass
+lh_samples_filtered = fir_high_pass(lh_samples_filtered, sampleRate, 11500, 461, np.int16) # Second pass
 
-def extract_audio(fname, tStart=None, tEnd=None):
-    with contextlib.closing(wave.open(fname,'rb')) as spf:
-        sampleRate = spf.getframerate()
-        ampWidth = spf.getsampwidth()
-        nChannels = spf.getnchannels()
-        nFrames = spf.getnframes()
-
-        startFrame, endFrame, segFrames = get_start_end_frames(nFrames, sampleRate, tStart, tEnd)
-
-        # Extract Raw Audio from multi-channel Wav File
-        spf.setpos(startFrame)
-        sig = spf.readframes(segFrames)
-        spf.close()
-
-        channels = interpret_wav(sig, segFrames, nChannels, ampWidth, True)
-
-        return (channels, nChannels, sampleRate, ampWidth, nFrames)
-
-def convert_to_mono(channels, nChannels, outputType):
-    if nChannels == 2:
-        samples = np.mean(np.array([channels[0], channels[1]]), axis=0)  # Convert to mono
-    else:
-        samples = channels[0]
-
-    return samples.astype(outputType)
-
-tStart=0
-tEnd=20
-
-channels, nChannels, sampleRate, ampWidth, nFrames = extract_audio('tmpsound.wav', tStart, tEnd)
-samples = convert_to_mono(channels, nChannels, np.int16)
-
-############################################################################################################################
-############################################################################################################################
-##
-##                  à déterminer 
-##
-############################################################################################################################
-############################################################################################################################
-
-#Canal audio
-zu, sigma = 0,0
-z = np.random.normal(zu,sigma,np.size(samples2))
-
-son_emetteur_noise = samples2 + z
-
-random_desynch = np.random.randint(1,100)
-vzeros = np.zeros(random_desynch,dtype = int)
-son_recepteur = np.concatenate([vzeros,son_emetteur_noise])
-
-##############################################################################################################################
-
-lh_samples_filtered = fir_high_pass(son_, sampleRate, 12500, 461, np.int16)             # First pass
-lh_samples_filtered = fir_high_pass(lh_samples_filtered, sampleRate, 12500, 461, np.int16) # Second pass
-
+# Demodulation
 Fp = 16000 #Fréquence porteuse
-t = np.linspace(0,np.size(lh_samples_filtered)/Fsamp, np.size(lh_samples_filtered)) 
+t = np.linspace(0,np.size(lh_samples_filtered)/sampleRate, np.size(lh_samples_filtered)) 
 
 I_reel = 2*lh_samples_filtered*np.cos(2*np.pi*Fp*t) #composante réel en phase 
 Q_quadrature = -2*lh_samples_filtered*np.sin(2*np.pi*Fp*t) #composante réel en quadrature
 
+alpha = 1/2
+Tsymbol = 0.0001875*85
+N = int(5 * Tsymbol * sampleRate)
 
-# Vérification son et son2 : normal de ne pas avoir les mêmes valeurs. 
-# --> supprimer facteurs 2 de I_reel et Q_quadrature
-son2 = I_reel*np.cos(2*np.pi*Fp*t)-Q_quadrature*np.sin(2*np.pi*Fp*t)
-#print(son)
-#print(son2) 
-
+temps, h_rc = rrcosfilter(N, alpha, Tsymbol, sampleRate)
 I = np.convolve (I_reel, h_rc,'same')
-Q = np.convolve (Q_quadrature, h_rc,'same')
-
-If2 = librosa.stft(I)
-IdB2 = librosa.amplitude_to_db(abs(If2))
-
+Q = np.convolve (Q_quadrature,h_rc,'same')
 x_t = I+1j*Q #signal complexe en bande de base
 
-sans_synchro = x_t[::int(Tsymbol*Fsamp)]
+modem = QAMModem(16, 
+                 bin_input=True,
+                 soft_decision=False,
+                 bin_output=True)
 
-convo_ss = np.convolve(h_rc,h_rc,'same')
-Mconvo_ss =np.max(convo_ss)
-
-div_ss =sans_synchro/Mconvo_ss
-
-texte_corr="L'objectif de ce projet est de créer un système de communication permettant de transmettre de l'information, en l'occurrence une image via la diffusion d'une musique."
+texte_corr="Interstellar prend comme point de départ un futur proche ressemblant à s’y méprendre au notre."
 texte_bin_corr = binaire(texte_corr) #Texte convertit en binaire
 texte_binaire_corr = np.array(texte_bin_corr)
 msg_test = modem.modulate(texte_binaire_corr)
 
-
-delta_symbols_corr = np.zeros(len(msg_test)*int(Tsymbol*Fsamp),dtype =complex)
-delta_symbols_corr[::int(Tsymbol*Fsamp)]= msg_test
-
+delta_symbols_corr = np.zeros(len(msg_test)*int(Tsymbol*sampleRate),dtype =complex)
+delta_symbols_corr[::int(Tsymbol*sampleRate)]= msg_test
 s_BB_oh = np.convolve(delta_symbols_corr, h_rc, mode="same") 
 
 correl = scipy.signal.correlate(s_BB_oh,x_t[:np.size(s_BB_oh)])
 
-
-########## peut être pas nécéssaire  ### 
-##rshift = np.size(s_BB_oh)-np.argmax(np.abs(correl))
-
+rshift = np.size(s_BB_oh)-np.argmax(np.abs(correl))
 corr_alpha =[]
 A = np.linspace(0,1,1000)
 for alpha in A :
     r_BB_coh_oh = x_t[rshift:(np.size(s_BB_oh)+rshift)]*np.exp(2j*np.pi*alpha)
     R = np.corrcoef(np.real(r_BB_coh_oh),np.real(s_BB_oh))
     corr_alpha.append((R[0,1]))
-    
+
 ccc = np.argmax(corr_alpha)
 
 test = x_t[rshift:]*np.exp(2j*np.pi*A[ccc])
-test2 = test[::int(Fsamp*Tsymbol)]
+test2 = test[::int(sampleRate*Tsymbol)]
 
 convo2 = np.convolve(h_rc,h_rc,'same')
 Mconvo2 =np.max(convo2)
-
 div =test2/Mconvo2
 
-demodulation2 = modem.demodulate(div) # modulation -> Moduler un tableau de bits en symboles de constellation
-
-demodulation2 = np.round(demodulation2).astype(int)
-texte_char = char(demodulation2) #Convertit du binaire au texte -> Vérification de la conversion en binaire
-print(texte_char)
-
-
-
+demodulation = modem.demodulate(div) # demodulation 
+demodulation = np.round(demodulation).astype(int)
+convDemod(demodulation)
