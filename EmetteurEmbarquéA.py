@@ -28,18 +28,20 @@ import numpy as np
 import scipy
 import librosa
 import librosa.display
-from pydub import AudioSegment 
+from pydub import AudioSegment
+from pydub.playback import play 
 from ModulationPy import PSKModem, QAMModem
 
 import wave
 from scipy.io import wavfile
+from scipy.io.wavfile import write
 import contextlib
 
 from turtle import *
 import math
 
 import scipy
-from commpy.filters import rcosfilter
+from commpy.filters import rrcosfilter
 
 
 def interpret_wav(raw_bytes, n_frames, n_channels, sample_width, interleaved = True):
@@ -328,7 +330,8 @@ son = np.real(convo*np.exp(2*np.pi*1j*Fcoupure*t))
 x = np.zeros(len(lp_samples_filtered)-len(son))
 son = np.append(son,x)
 tmpsound = lp_samples_filtered + son # tmpsound = son porteur + info
-write("emetteur.wav",sampleRate,tmpsound.astype(np.int16))
+#write("emetteur.wav",sampleRate,tmpsound.astype(np.int16))
+tmpsound.export('tmpsounds1.wav',format='wav')
 # sound1 = AudioSegment.from_file("son_filtré.wav") # son filtré 
 # sound2 = AudioSegment.from_file("quieters1.wav") 
 # #tmpsound = sound1.overlay(sound2, position=0.15 * len(sound1))
