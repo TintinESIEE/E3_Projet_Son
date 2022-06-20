@@ -13,22 +13,22 @@
 ###########################################################################################################################################
 
 # enable plots in the notebook
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt## en com
 # makes our plots prettier
-import seaborn
-seaborn.set(style='ticks')
+import seaborn ## en com
+seaborn.set(style='ticks')## en com
 
 #import the audio playback widget
 from IPython.display import Audio
 
 # useful librairies
-import mir_eval
+import mir_eval ## en com
 import numpy as np
 import scipy
 from scipy.io import wavfile
 from scipy import signal
-import librosa
-import librosa.display
+import librosa ## en com
+import librosa.display ## en com
 from pydub import AudioSegment 
 from ModulationPy import PSKModem, QAMModem
 import wave
@@ -36,6 +36,7 @@ import contextlib
 from commpy.filters import rrcosfilter
 from turtle import *
 import math
+import time
 
 # Différents types de filtres
 def fir_high_pass(samples, fs, fH, N, outputType):
@@ -224,3 +225,6 @@ div =test2/Mconvo2
 demodulation = modem.demodulate(div) # demodulation 
 demodulation = np.round(demodulation).astype(int)
 convDemod(demodulation)
+
+time.sleep(20)
+bye()
